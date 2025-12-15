@@ -1,0 +1,8 @@
+# ESXi syslog forwarding to Elastic Agent syslog listener
+esxcli system syslog config set --loghost='udp://<COLLECTOR_IP>:1515'
+# For TCP with TLS terminator/proxy:
+# esxcli system syslog config set --loghost='tcp://<COLLECTOR_IP>:1515'
+esxcli system syslog reload
+
+# Ensure firewall allows outbound syslog
+esxcli network firewall ruleset set -r syslog -e true

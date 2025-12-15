@@ -1,0 +1,101 @@
+{
+  "policy": {
+    "name": "netflow-syslog-collector",
+    "namespace": "default",
+    "description": "Collector for NetFlow/IPFIX/sFlow and syslog from network infrastructure (TLS listeners for syslog).",
+    "monitoring_enabled": ["logs"]
+  },
+  "package_policies": [
+    {
+      "name": "netflow-listeners",
+      "package": { "name": "netflow", "version": "latest" },
+      "inputs": [
+        {
+          "type": "netflow",
+          "enabled": true,
+          "vars": {
+            "host": { "value": "0.0.0.0" },
+            "port": { "value": 2055 },
+            "protocol": { "value": "udp" },
+            "netflow_v9": { "value": true },
+            "ipfix": { "value": true },
+            "queue_size": { "value": 8192 },
+            "expiration_timeout": { "value": "30m" },
+            "internal_networks": { "value": ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"] }
+          }
+        },
+        {
+          "type": "netflow",
+          "enabled": true,
+          "vars": {
+            "host": { "value": "0.0.0.0" },
+            "port": { "value": 4739 },
+            "protocol": { "value": "udp" },
+            "ipfix": { "value": true },
+            "queue_size": { "value": 8192 },
+            "expiration_timeout": { "value": "30m" },
+            "internal_networks": { "value": ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"] }
+          }
+        },
+        {
+          "type": "netflow",
+          "enabled": true,
+          "vars": {
+            "host": { "value": "0.0.0.0" },
+            "port": { "value": 6343 },
+            "protocol": { "value": "udp" },
+            "sflow": { "value": true },
+            "queue_size": { "value": 4096 },
+            "expiration_timeout": { "value": "20m" },
+            "internal_networks": { "value": ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "network-syslog",
+      "package": { "name": "syslog", "version": "latest" },
+      "inputs": [
+        {
+          "type": "tcp",
+          "enabled": true,
+          "vars": {
+            "host": { "value": "0.0.0.0:1514" },
+            "ssl": { "value": true },
+            "ssl.certificate": { "value": "/etc/pki/tls/certs/syslog.crt" },
+            "ssl.key": { "value": "/etc/pki/tls/private/syslog.key" },
+            "protocol": { "value": "auto" }
+          },
+          "streams": [
+            {
+              "data_stream": { "type": "logs", "dataset": "syslog.network" },
+              "vars": {
+                "keep_null": { "value": false }
+              }
+            }
+          ]
+        },
+        {
+          "type": "udp",
+          "enabled": true,
+          "vars": {
+            "host": { "value": "0.0.0.0:1514" },
+            "protocol": { "value": "auto" }
+          },
+          "streams": [
+            {
+              "data_stream": { "type": "logs", "dataset": "syslog.network" },
+              "vars": {
+                "keep_null": { "value": false }
+              }
+            }
+          ]
+        }
+      ],
+      "parsing": {
+        "vendors": ["cisco", "paloalto", "fortinet", "generic"],
+        "notes": "Syslog processors auto-detect RFC 5424/3164; add pipeline rules in Kibana if more normalization needed."
+      }
+    }
+  ]
+}

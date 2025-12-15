@@ -1,0 +1,53 @@
+Windows Elastic Agent manual enrollment (run from an elevated PowerShell prompt):
+
+1. Unzip the package (if you received the `.zip` wrapper):
+   ```
+   Expand-Archive -Path .\agent-enrollment-package-windows.zip -DestinationPath .
+   Set-Location .\agent-enrollment-package-windows
+   ```
+
+2. Unzip the Elastic Agent artifact and move into the binary folder:
+   ```
+   Expand-Archive -Path .\elastic-agent-9.2.2-windows-x86_64.zip -DestinationPath .\elastic-agent-9.2.2
+   Set-Location .\elastic-agent-9.2.2\elastic-agent-9.2.2-windows-x86_64
+   ```
+
+3. Populate the required variables (values generated on 2025-12-14 via Fleet API):
+   ```
+   $FleetUrl = "https://192.168.1.164:8220"
+   $EnrollmentToken = "UW5vVUg1c0JkdHJTaUZCM1VzVUg6dHhRT1BkU0duZFZERm1GMjM4d2FNUQ=="
+   $CA = (Resolve-Path ..\..\http_ca.crt).Path
+   ```
+   - Tokens are policy-scoped, so no policy ID is required during install. Regenerate the token if you rotate `windows-network-baseline`.
+
+4. (Optional but recommended) Pin the Ethernet and Wi-Fi adapters that should run packet capture by setting the `CAPTURE_INTERFACE_*` environment variables before installing:
+   ```
+   Get-NetAdapter | Format-Table Name, Status, InterfaceDescription, InterfaceGuid
+   # Replace the GUIDs below with ones from the adapters you want to monitor.
+   setx CAPTURE_INTERFACE_ETHERNET "\\Device\\NPF_{A1B2C3D4-....}"
+   setx CAPTURE_INTERFACE_WIFI "\\Device\\NPF_{E5F6A7B8-....}"
+   ```
+   - Use the Npcap name reported by `packetbeat.exe devices` if you prefer (`.\packetbeat.exe devices` from this folder).
+   - Leave a value blank (or remove the env var) if the host does not use that media type.
+
+5. Install and enroll the agent (non-interactive):
+   ```
+   .\elastic-agent.exe install `
+     --url $FleetUrl `
+     --enrollment-token $EnrollmentToken `
+     --certificate-authorities $CA `
+     --non-interactive --force
+   # Append --insecure if the endpoint cannot validate http_ca.crt yet (temporary workaround).
+   ```
+
+6. Validate the service:
+   ```
+   Get-Service elastic-agent
+   & "C:\Program Files\Elastic\Agent\elastic-agent.exe" status
+   ```
+
+Optional: the package also contains `.\scripts\deploy-windows.ps1`, which performs steps 3–6 automatically (and auto-detects adapters). Pass `-CaptureInterfaceEthernet`, `-CaptureInterfaceWifi`, or `-Insecure` to mirror the manual flags.
+
+Notes:
+- Ensure Elasticsearch/Fleet use HTTPS with the bundled CA (`http_ca.crt`) and that TCP/8220 is reachable.
+- Regenerate the enrollment token if you rotate policies; the token above was created on 2025-12-14 for the `windows-network-baseline` policy.

@@ -1,0 +1,10 @@
+server.host: "0.0.0.0"
+server.ssl.enabled: true
+server.ssl.keystore.path: "/opt/elastic/kibana/current/config/certs/http.p12"
+elasticsearch.hosts: ["https://localhost:9200"]
+elasticsearch.username: "kibana_system"
+elasticsearch.ssl.certificateAuthorities: ["/opt/elastic/kibana/current/config/certs/http_ca.crt"]
+elasticsearch.ssl.verificationMode: none
+xpack.security.encryptionKey: "12345678901234567890123456789012"
+xpack.encryptedSavedObjects.encryptionKey: "12345678901234567890123456789012"
+xpack.reporting.encryptionKey: "12345678901234567890123456789012"

@@ -1,0 +1,9 @@
+# Palo Alto Networks syslog profile for traffic logs
+set shared log-settings syslog ELASTIC-TRAFFIC server <COLLECTOR_IP> transport tcp port 1514 format syslog
+set shared log-settings syslog ELASTIC-TRAFFIC server <COLLECTOR_IP> facility LOG_USER
+set shared log-settings syslog ELASTIC-TRAFFIC server <COLLECTOR_IP> certificate <CERT_NAME>  # if using TLS proxy/terminator
+set shared log-settings syslog ELASTIC-TRAFFIC match-list TRAFFIC_FILTER log-type traffic filter '(receive_time geq now - 0d)'
+set shared log-settings syslog ELASTIC-TRAFFIC match-list TRAFFIC_FILTER send-raw yes
+
+# Apply to traffic logs
+set deviceconfig system logging-properties match-list TRAFFIC_FILTER syslog ELASTIC-TRAFFIC

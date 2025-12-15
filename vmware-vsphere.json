@@ -1,0 +1,62 @@
+{
+  "policy": {
+    "name": "vmware-vsphere-network-baseline",
+    "namespace": "default",
+    "description": "VMware vSphere/ESXi network-focused collection (throughput and vSwitch stats, no heavy compute metrics).",
+    "monitoring_enabled": ["logs", "metrics"]
+  },
+  "package_policies": [
+    {
+      "name": "vmware-vsphere",
+      "package": { "name": "vmware", "version": "latest" },
+      "inputs": [
+        {
+          "type": "vsphere/metrics",
+          "enabled": true,
+          "vars": {
+            "hosts": { "value": ["${VCENTER_HOST}"] },
+            "username": { "value": "${VCENTER_USERNAME}" },
+            "password": { "value": "${VCENTER_PASSWORD}" },
+            "insecure": { "value": "${VCENTER_INSECURE:false}" },
+            "period": { "value": "120s" },
+            "max_query_size": { "value": 64 },
+            "collect_vms": { "value": true },
+            "collect_datastores": { "value": false },
+            "collect_hosts": { "value": true },
+            "collect_performance_metrics": { "value": true },
+            "metricsets": { "value": ["datacenter", "cluster", "host", "vm", "vcenter"] }
+          },
+          "streams": [
+            {
+              "data_stream": { "type": "metrics", "dataset": "vmware.vsphere" },
+              "enabled": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "esxi-syslog",
+      "package": { "name": "syslog", "version": "latest" },
+      "inputs": [
+        {
+          "type": "udp",
+          "enabled": true,
+          "vars": {
+            "host": { "value": "0.0.0.0:1515" },
+            "protocol": { "value": "auto" }
+          },
+          "streams": [
+            {
+              "data_stream": { "type": "logs", "dataset": "syslog.esxi" },
+              "vars": {
+                "keep_null": { "value": false }
+              }
+            }
+          ]
+        }
+      ],
+      "notes": "Configure ESXi to forward VMkernel/vobd logs to this listener."
+    }
+  ]
+}

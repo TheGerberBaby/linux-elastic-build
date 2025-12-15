@@ -1,0 +1,15 @@
+! Cisco IOS NetFlow v9 + syslog forwarding
+ip flow-export version 9
+ip flow-export destination <COLLECTOR_IP> 2055
+ip flow-cache timeout active 60
+ip flow-cache timeout inactive 15
+!
+interface <WAN_INTERFACE>
+ ip flow ingress
+ ip flow egress
+!
+logging trap informational
+logging host <COLLECTOR_IP> transport tcp port 1514
+logging host <COLLECTOR_IP> transport udp port 1514
+logging source-interface <MGMT_INTERFACE>
+service timestamps log datetime msec localtime show-timezone

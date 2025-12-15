@@ -1,0 +1,6 @@
+# Generic sFlow export example
+sflow agent <SOURCE_INTERFACE_IP>
+sflow receiver 1 <COLLECTOR_IP> 6343
+sflow sampling-rate 1 8192         # adjust per device performance
+sflow polling-interval 1 60
+sflow enable

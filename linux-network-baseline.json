@@ -1,0 +1,91 @@
+{
+  "policy": {
+    "name": "linux-network-baseline",
+    "namespace": "default",
+    "description": "Lightweight network baseline for Linux endpoints (socket/process events, auditd network syscalls, auth logs).",
+    "monitoring_enabled": ["logs", "metrics"]
+  },
+  "package_policies": [
+    {
+      "name": "system-network-events",
+      "package": { "name": "system", "version": "latest" },
+      "inputs": [
+        {
+          "type": "system/socket",
+          "enabled": true,
+          "streams": [
+            {
+              "data_stream": { "type": "metrics", "dataset": "system.socket" },
+              "vars": {
+                "period": { "value": "60s" },
+                "internal_networks": { "value": ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"] }
+              }
+            }
+          ]
+        },
+        {
+          "type": "system/process",
+          "enabled": true,
+          "streams": [
+            {
+              "data_stream": { "type": "metrics", "dataset": "system.process" },
+              "vars": {
+                "period": { "value": "60s" },
+                "process.include_top_n.by_cpu": { "value": 0 },
+                "process.include_top_n.by_memory": { "value": 0 }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "auditd-network",
+      "package": { "name": "auditd", "version": "latest" },
+      "inputs": [
+        {
+          "type": "auditd",
+          "enabled": true,
+          "vars": {
+            "audit_rules": {
+              "value": [
+                "-a always,exit -F arch=b64 -S connect -F key=network_connect",
+                "-a always,exit -F arch=b64 -S accept -F key=network_accept",
+                "-a always,exit -F arch=b64 -S bind -F key=network_bind",
+                "-a always,exit -F arch=b64 -S socket -F key=network_socket"
+              ]
+            },
+            "backlog_limit": { "value": 8192 },
+            "failure_mode": { "value": "0" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "linux-auth-firewall-logs",
+      "package": { "name": "filestream", "version": "latest" },
+      "inputs": [
+        {
+          "type": "filestream",
+          "enabled": true,
+          "streams": [
+            {
+              "data_stream": { "type": "logs", "dataset": "system.auth" },
+              "vars": {
+                "paths": { "value": ["/var/log/auth.log", "/var/log/secure"] },
+                "ignore_older": { "value": "72h" }
+              }
+            },
+            {
+              "data_stream": { "type": "logs", "dataset": "system.firewall" },
+              "vars": {
+                "paths": { "value": ["/var/log/messages", "/var/log/firewalld", "/var/log/iptables.log"] },
+                "ignore_older": { "value": "72h" }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
